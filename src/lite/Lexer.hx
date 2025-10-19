@@ -3,6 +3,8 @@ package lite;
 import lite.Token;
 import lite.core.PosException;
 
+// TODO: maybe cache the current position in a global var.. consuming will increment the line and column
+// idk, just for a more D.R.Y code
 class Lexer {
 	var content:String;
 
