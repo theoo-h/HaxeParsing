@@ -1,22 +1,40 @@
 package;
 
 import lite.Lexer;
+import lite.Parser;
+import lite.Token;
+import lite.core.PosInfo;
 
 class Main {
 	static function main() {
-		var lexer = new Lexer("
-		var myVariable = 0xFFFFFFF;
-		
-		var myOtherVariable = myVariable + 10.6;
+		/**
+		 * significa:
+		 * 10 + (20 * (20.5 / 56))
+		 */
+		// @formatter:off
+		var tokens = [
+			TOperator(AddIncrement, null),
+			TLiteral(INT(10), null),
+			TOperator(Add, null),
 
-		function main()
-		{
-			print(\"This is great !\");
+			TSymbol(LParen, null),
 
-			myOtherVariable++;
-		}
-		");
+				TLiteral(INT(20), null),
+				TOperator(Mult, null),
 
-		trace(lexer.run());
+				TSymbol(LParen, null),
+					TLiteral(FLOAT(20.5), null),
+					TOperator(Div, null),
+					TLiteral(INT(56), null),
+				TSymbol(RParen, null),
+			
+			TSymbol(RParen, null)
+		];
+	// @formatter:on
+		var parser = new Parser(tokens);
+		var ast = parser.run();
+
+		for (tree in ast)
+			trace(tree);
 	}
 }

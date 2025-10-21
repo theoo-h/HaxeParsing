@@ -1,18 +1,22 @@
 package lite;
 
-import lite.Position;
+import lite.core.PosInfo;
 
 enum Token {
-	TKeyword(t:Keyword, pos:Position);
-	TIdent(name:String, pos:Position);
+	TKeyword(t:Keyword, pos:PosInfo);
+	TIdent(name:String, pos:PosInfo);
 
-	TLiteral(t:Literal, pos:Position);
+	TLiteral(t:Literal, pos:PosInfo);
 
-	TOperator(t:Operator, pos:Position);
-	TSymbol(t:Symbol, pos:Position);
+	TOperator(t:Operator, pos:PosInfo);
+	TSymbol(t:Symbol, pos:PosInfo);
+
+	TEof;
 }
 
 enum Symbol {
+	Colon;
+
 	// ()
 	LParen;
 	RParen;
@@ -35,35 +39,61 @@ enum Literal {
 }
 
 enum Operator {
+	// !
+	Not;
+
+	// !=
+	NotEqual;
+
+	// ||
+	Or;
+
+	// &&
+	And;
+
+	// <>
+	LessThan;
+	GreaterThan;
+
+	// <= =>
+	LessEqualThan;
+	GreaterEqualThan;
+
+	// <- ->
+	LArrow;
+	RArrow;
+
 	// =
-	ASSIGN;
+	Assign;
 
 	// ==
-	EQUAL;
+	Equal;
 
 	// "*"
-	MULT;
+	Mult;
 	// "*="
-	MULT_ASSIGN;
+	MultAssign;
 
 	// "+"
-	ADD;
+	Add;
 	// "+="
-	ADD_ASSIGN;
+	AddAssign;
 	// "++"
-	ADD_INCREMENT;
+	AddIncrement;
 
 	// "-"
-	SUB;
+	Sub;
 	// "-="
-	SUB_ASSIGN;
+	SubAssign;
 	// "--"
-	SUB_DECREMENT;
+	SubDecrement;
 
 	// "/"
-	DIV;
+	Div;
 	// "/="
-	DIV_ASSIGN;
+	DivAssign;
+
+	Mod;
 }
 
 enum Keyword {

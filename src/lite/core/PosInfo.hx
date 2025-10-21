@@ -1,7 +1,7 @@
-package lite;
+package lite.core;
 
 @:structInit
-class Position {
+class PosInfo {
 	public var minLine:UInt;
 	public var maxLine:UInt;
 

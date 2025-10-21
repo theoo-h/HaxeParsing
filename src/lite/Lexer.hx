@@ -1,10 +1,15 @@
 package lite;
 
 import lite.Token;
+import lite.core.LiteException;
 import lite.core.PosException;
+import lite.core.PosInfo;
+import lite.util.Util;
 
-// TODO: maybe cache the current position in a global var.. consuming will increment the line and column
-// idk, just for a more D.R.Y code
+// broken somehow
+// (( )) <- this one doesnt get parsed, idk why
+// FIXME
+// rn i will just write tokens myself while making the ast
 class Lexer {
 	var content:String;
 
@@ -17,6 +22,15 @@ class Lexer {
 
 	var position:UInt;
 
+	var info:PosInfo;
+
+	function prepareInfo() {
+		info = {};
+
+		info.minLine = line;
+		info.minColumn = column;
+	}
+
 	public function run():Array<Token> {
 		final tokens:Array<Token> = [];
 
@@ -24,6 +38,8 @@ class Lexer {
 		column = 0;
 
 		position = 0;
+
+		prepareInfo();
 
 		while (position < content.length) {
 			final token:Token = resolveToken();
@@ -33,6 +49,8 @@ class Lexer {
 
 			consume();
 		}
+
+		tokens.push(TEof);
 		return tokens;
 	}
 
@@ -60,10 +78,7 @@ class Lexer {
 	function parseString(delimiter:Int):Token {
 		var buff:StringBuf = new StringBuf();
 
-		final position:Position = {};
-
-		position.minLine = line;
-		position.minColumn = column;
+		prepareInfo();
 
 		// consume the delimiter
 		consume();
@@ -75,10 +90,7 @@ class Lexer {
 				break;
 
 			if (StringTools.isEof(char)) {
-				position.maxLine = line;
-				position.maxColumn = column;
-
-				throw new PosException("Expected \"", position);
+				throw new PosException("Expected \"", info);
 			}
 
 			buff.addChar(char);
@@ -86,20 +98,16 @@ class Lexer {
 			consume();
 		}
 
-		position.maxLine = line;
-		position.maxColumn = column;
-
-		return TLiteral(STRING(buff.toString()), position);
+		return TLiteral(STRING(buff.toString()), info);
 	}
 
 	function parseSymbol():Token {
 		final char = currentChar();
-		final position:Position = {};
-
-		position.minLine = line;
-		position.minColumn = column;
+		prepareInfo();
 
 		final sym:Null<Symbol> = switch (char) {
+			case ":".code:
+				Colon;
 			case "(".code:
 				LParen;
 			case ")".code:
@@ -112,61 +120,92 @@ class Lexer {
 				LBrace;
 			case "}".code:
 				RBrace;
-			case _:
+			default:
 				null;
 		}
 		final op:Null<Operator> = switch (char) {
+			case "%".code:
+				Mod;
+			case "!".code:
+				if (peek() == "=".code) {
+					consume();
+					NotEqual;
+				} else Not;
+			case "|".code:
+				if (peek() == "|".code) {
+					consume();
+					Or;
+				} else null;
+			case "&".code:
+				if (peek() == "&".code) {
+					consume();
+					And;
+				} else null;
+			case ">".code:
+				if (peek() == "=".code) {
+					consume();
+					GreaterEqualThan;
+				} else GreaterThan;
+			case "<".code:
+				if (peek() == "-".code) {
+					consume();
+					LArrow;
+				} else if (peek() == "=".code) {
+					consume();
+					LessEqualThan;
+				} else LessThan;
+
 			case "=".code:
 				if (peek() == "=".code) {
 					consume();
-					EQUAL;
-				} else ASSIGN;
+					Equal;
+				} else Assign;
 
 			case "+".code:
 				if (peek() == '+'.code) {
 					consume();
-					ADD_INCREMENT;
+					AddIncrement;
 				} else if (peek() == '='.code) {
 					consume();
-					ADD_ASSIGN;
-				} else ADD;
+					AddAssign;
+				} else Add;
 
+			case "/".code:
+				Div;
 			case "-".code:
-				if (peek() == '-'.code) {
+				if (peek() == '>'.code) {
 					consume();
-					SUB_DECREMENT;
+					RArrow;
+				} else if (peek() == '-'.code) {
+					consume();
+					SubDecrement;
 				} else if (peek() == '='.code) {
 					consume();
-					SUB_ASSIGN;
-				} else SUB;
+					SubAssign;
+				} else Sub;
 
 			case "*".code:
 				if (peek() == '='.code) {
 					consume();
-					MULT_ASSIGN;
-				} else MULT;
-			case _:
+					MultAssign;
+				} else Mult;
+			default:
 				null;
 		}
 
-		position.maxLine = line;
-		position.maxColumn = column;
-
-		if (sym != null)
-			return TSymbol(sym, position);
-
-		if (op != null)
-			return TOperator(op, position);
+		if (sym != null) {
+			return TSymbol(sym, info);
+		}
+		if (op != null) {
+			return TOperator(op, info);
+		}
 
 		return null;
 	}
 
 	function parseNumber():Token {
 		var buff:StringBuf = new StringBuf();
-		var position:Position = {};
-
-		position.minLine = line;
-		position.minColumn = column;
+		prepareInfo();
 
 		var isFloat = false;
 
@@ -180,9 +219,7 @@ class Lexer {
 				buff.addChar(currentChar());
 				consume();
 			}
-			position.maxLine = line;
-			position.maxColumn = column;
-			return TLiteral(INT(Std.parseInt(buff.toString())), position);
+			return TLiteral(INT(Std.parseInt(buff.toString())), info);
 		}
 
 		// float
@@ -217,22 +254,16 @@ class Lexer {
 			}
 		}
 
-		position.maxLine = line;
-		position.maxColumn = column;
-
 		var str = buff.toString();
 		if (isFloat)
-			return TLiteral(FLOAT(Std.parseFloat(str)), position);
+			return TLiteral(FLOAT(Std.parseFloat(str)), info);
 		else
-			return TLiteral(INT(Std.parseInt(str)), position);
+			return TLiteral(INT(Std.parseInt(str)), info);
 	}
 
 	function parseIdent() {
 		final buff:StringBuf = new StringBuf();
-		final position:Position = {};
-
-		position.minLine = line;
-		position.minColumn = column;
+		prepareInfo();
 
 		while (true) {
 			final char = currentChar();
@@ -244,8 +275,6 @@ class Lexer {
 
 			consume();
 		}
-		position.maxLine = line;
-		position.maxColumn = column;
 
 		final output = buff.toString();
 
@@ -253,15 +282,15 @@ class Lexer {
 		final possibleKeyword = resolveKeyword(output);
 
 		if (possibleKeyword != null)
-			return TKeyword(possibleKeyword, position);
+			return TKeyword(possibleKeyword, info);
 
 		// tries to resolve literal
 		final possibleLiteral = resolveLiteral(output);
 
 		if (possibleLiteral != null)
-			return TLiteral(possibleLiteral, position);
+			return TLiteral(possibleLiteral, info);
 
-		return TIdent(output, position);
+		return TIdent(output, info);
 	}
 
 	function resolveLiteral(name:String):Null<Literal> {
@@ -310,10 +339,13 @@ class Lexer {
 		} else
 			column++;
 		position++;
+
+		info.maxLine = line;
+		info.maxColumn = column;
 	}
 
-	function peek() {
-		return StringTools.fastCodeAt(content, position + 1);
+	function peek(offset:Int = 1) {
+		return StringTools.fastCodeAt(content, position + offset);
 	}
 
 	// helpers
