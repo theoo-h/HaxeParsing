@@ -15,6 +15,9 @@ enum Token {
 }
 
 enum Symbol {
+	Comma;
+
+	Semicolon;
 	Colon;
 
 	// ()

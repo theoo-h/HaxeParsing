@@ -105,6 +105,10 @@ class Lexer {
 		prepareInfo();
 
 		final sym:Null<Symbol> = switch (char) {
+			case ",".code:
+				Comma;
+			case ";".code:
+				Semicolon;
 			case ":".code:
 				Colon;
 			case "(".code:
@@ -269,7 +273,8 @@ class Lexer {
 		while (true) {
 			final char = currentChar();
 
-			if (StringTools.isEof(char) || (char != "_".code && !isAlpha(char)) || isWhitespace(char))
+			// we can also check digit bc atp we also checekd if first char is not digit
+			if (StringTools.isEof(char) || (char != "_".code && !isAlpha(char) && !isDigit(char)) || isWhitespace(char))
 				break;
 
 			buff.addChar(char);
