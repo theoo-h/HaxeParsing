@@ -46,8 +46,6 @@ class Lexer {
 
 			if (token != null)
 				tokens.push(token);
-
-			consume();
 		}
 
 		tokens.push(TEof);
@@ -59,6 +57,7 @@ class Lexer {
 
 		switch (char) {
 			case isWhitespace(char) => true:
+				consume();
 				return null;
 			case isDigit(char) => true:
 				return parseNumber();
@@ -194,9 +193,11 @@ class Lexer {
 		}
 
 		if (sym != null) {
+			consume();
 			return TSymbol(sym, info);
 		}
 		if (op != null) {
+			consume();
 			return TOperator(op, info);
 		}
 
