@@ -5,6 +5,7 @@ pequeño proyecto para aprender el hacer tokenizacion, parseo y interprete de un
 - parsear And y Or
 - parsear llamadas a funciones
 - orientacion a objetos
+- añadir pos info a todo lo que se pueda en el parser
 
 ## Hecho
 - Tokenizacion

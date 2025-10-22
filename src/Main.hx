@@ -11,6 +11,7 @@ class Main {
 		var i = 1;
 
 		for (i; i < 5; ++i) {}
+			
 		for (i = 0; i < 5 / (10 * 16); ++i) {}
 
 		for (var i = 0; i < 11; ++i) {}
