@@ -8,16 +8,22 @@ import lite.util.Printer;
 class Main {
 	static function main() {
 		var tokens = new Lexer('
-		var myNum = 10;
-		var myNum_2 = 20;
+		var i = 1;
 
-		function miFunc() {
-			var mySum = 10 + (myNum * myNum_2 / (16 * 4 / (myNum_2)));
-			mySum = null;
-		}
+		for (i; i < 5; ++i) {}
+		for (i = 0; i < 5 / (10 * 16); ++i) {}
+
+		for (var i = 0; i < 11; ++i) {}
+
+		for (i in 0...10) {}
+
+		while ((5 * 16 / 5.545e+3 / (10 * 5.5)) < 3) {}
+
+		if (true == false) {}
+
 		').run();
 		var parser = new Parser(tokens);
 		var ast = parser.run();
-		trace(Printer.run(ast));
+		trace("\n" + Printer.run(ast));
 	}
 }

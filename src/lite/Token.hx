@@ -96,6 +96,8 @@ enum Operator {
 	// "/="
 	DivAssign;
 
+	RangeDot;
+
 	Mod;
 }
 
@@ -109,4 +111,6 @@ enum Keyword {
 
 	WHILE;
 	FOR;
+
+	IN;
 }

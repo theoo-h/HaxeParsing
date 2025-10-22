@@ -127,6 +127,12 @@ class Lexer {
 				null;
 		}
 		final op:Null<Operator> = switch (char) {
+			case ".".code:
+				if (peek() == ".".code && peek(1) == ".".code) {
+					consume();
+					consume();
+					RangeDot;
+				} else null;
 			case "%".code:
 				Mod;
 			case "!".code:
@@ -327,6 +333,8 @@ class Lexer {
 				WHILE;
 			case "for":
 				FOR;
+			case "in":
+				IN;
 			case _:
 				null;
 		}

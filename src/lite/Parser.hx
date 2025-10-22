@@ -49,6 +49,12 @@ class Parser {
 						return parseVarDecl();
 					case FUNCTION:
 						return parseFuncDecl();
+					case FOR:
+						return parseForStat();
+					case WHILE:
+						return parseWhileStat();
+					case IF:
+						return parseIfStat();
 					default:
 				}
 			default:
@@ -64,6 +70,7 @@ class Parser {
 		// throw new LiteException('Unexpected token: ${curToken}');
 	}
 
+	// declarations
 	function parseVarDecl():Expr {
 		expectKeyword(VAR);
 
@@ -107,6 +114,101 @@ class Parser {
 		};
 	}
 
+	// statements
+	function parseWhileStat():Expr {
+		consume();
+
+		expectSymbol(LParen);
+
+		final cond = parseExpr();
+
+		expectSymbol(RParen);
+
+		final body = parseBlock();
+
+		return {
+			expr: EWhile(cond, body)
+		};
+	}
+
+	function parseForStat():Expr {
+		consume(); // for
+
+		expectSymbol(LParen);
+
+		final fToken = currentToken();
+
+		switch (fToken) {
+			case TKeyword(kw, _):
+				if (kw == VAR)
+					return _parseForCond(true);
+			case TIdent(name, pos):
+				// check if its cond
+				var isCond = false;
+
+				switch (peek()) {
+					case TSymbol(sym, _):
+						if (sym == Semicolon) isCond = true;
+					case TOperator(op, _):
+						if (op == Assign) isCond = true;
+					case _:
+				}
+
+				if (isCond)
+					return _parseForCond(false);
+			case _:
+		}
+
+		return _parseForIn();
+	}
+
+	function _parseForCond(isDecl):Expr {
+		final decl = isDecl ? parseVarDecl() : parseExpr();
+		if (!isDecl)
+			expectSymbol(Semicolon);
+
+		final cond = parseExpr();
+		expectSymbol(Semicolon);
+		final incr = parseExpr();
+		expectSymbol(RParen);
+		final body = parseBlock();
+
+		return {
+			expr: EForCond(decl, cond, incr, body)
+		};
+	}
+
+	function _parseForIn():Expr {
+		final ident = expectIdent().getParameters()[0];
+
+		expectKeyword(IN);
+
+		final iterable = parseExpr();
+		expectSymbol(RParen);
+		final body = parseBlock();
+
+		return {
+			expr: EForIn(ident, iterable, body)
+		};
+	}
+
+	// TODO: stack of elifs, else
+	function parseIfStat():Expr {
+		consume();
+
+		expectSymbol(LParen);
+
+		final cond = parseExpr();
+
+		expectSymbol(RParen);
+
+		final body = parseBlock();
+
+		return {
+			expr: EIfStat(cond, body)
+		};
+	}
+
 	function parseBlock():Expr {
 		expectSymbol(LBrace);
 
@@ -127,21 +229,24 @@ class Parser {
 		};
 	}
 
-	function matchSym(matchingSym:Symbol) {
-		switch (currentToken()) {
-			case TSymbol(sym, _):
-				if (sym == matchingSym)
-					return true;
-			default:
-		}
-
-		return false;
-	}
-
-	// inicio de parsers de precendencia
+	// inicio de parsers de precendencia (TODO: and, or)
 	// inicia el arbol de cualquier expresion
 	function parseExpr() {
-		return parseAssignment();
+		return parseRange();
+	}
+
+	function parseRange():Expr {
+		final left = parseAssignment();
+
+		if (matchOp(RangeDot)) {
+			consume();
+			final right = parseAssignment();
+
+			return {
+				expr: ERange(left, right)
+			};
+		}
+		return left;
 	}
 
 	function parseAssignment():Expr {
@@ -293,6 +398,7 @@ class Parser {
 		switch (currentToken()) {
 			case TLiteral(literal, _):
 				consume();
+
 				return {
 					expr: ELiteral(literal)
 				};
@@ -325,6 +431,28 @@ class Parser {
 	}
 
 	// final de parsers de precendencia
+
+	function matchSym(matchingSym:Symbol) {
+		switch (currentToken()) {
+			case TSymbol(sym, _):
+				if (sym == matchingSym)
+					return true;
+			default:
+		}
+
+		return false;
+	}
+
+	function matchOp(matchingOp:Operator) {
+		switch (currentToken()) {
+			case TOperator(op, _):
+				if (op == matchingOp)
+					return true;
+			default:
+		}
+
+		return false;
+	}
 
 	function expectSymbol(eSym:Symbol):Token {
 		switch (currentToken()) {
