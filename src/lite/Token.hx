@@ -15,6 +15,7 @@ enum Token {
 }
 
 enum Symbol {
+	Dot;
 	Comma;
 
 	Semicolon;
@@ -102,6 +103,8 @@ enum Operator {
 }
 
 enum Keyword {
+	TYPE;
+
 	VAR;
 	FUNCTION;
 

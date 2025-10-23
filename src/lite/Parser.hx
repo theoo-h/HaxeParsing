@@ -71,6 +71,14 @@ class Parser {
 	}
 
 	// declarations
+	function parseTypeDecl():Expr {
+		expectKeyword(TYPE);
+
+		final name = expectIdent().getParameters()[0];
+
+		return null;
+	}
+
 	function parseVarDecl():Expr {
 		expectKeyword(VAR);
 
@@ -204,8 +212,18 @@ class Parser {
 
 		final body = parseBlock();
 
+		var fallback:Null<Expr> = null;
+
+		if (matchKw(ELIF)) {
+			fallback = parseIfStat();
+		} else if (matchKw(ELSE)) {
+			consume();
+
+			fallback = parseBlock();
+		}
+
 		return {
-			expr: EIfStat(cond, body)
+			expr: EIfStat(cond, body, fallback)
 		};
 	}
 
@@ -232,7 +250,49 @@ class Parser {
 	// inicio de parsers de precendencia (TODO: and, or)
 	// inicia el arbol de cualquier expresion
 	function parseExpr() {
-		return parseRange();
+		return parseOr();
+	}
+
+	function parseOr():Expr {
+		var left = parseAnd();
+
+		while (true) {
+			switch (currentToken()) {
+				case TOperator(op, _):
+					if (op == Or) {
+						consume();
+						final right = parseAnd();
+						left = {
+							expr: EBinOp(left, right, op)
+						};
+					} else {
+						return left;
+					}
+				default:
+					return left;
+			}
+		}
+	}
+
+	function parseAnd():Expr {
+		var left = parseRange();
+
+		while (true) {
+			switch (currentToken()) {
+				case TOperator(op, _):
+					if (op == And) {
+						consume();
+						final right = parseRange();
+						left = {
+							expr: EBinOp(left, right, op)
+						};
+					} else {
+						return left;
+					}
+				default:
+					return left;
+			}
+		}
 	}
 
 	function parseRange():Expr {
@@ -395,42 +455,68 @@ class Parser {
 	// parsea primarios
 	// que son literales (strings, numeros, bools, null), idents
 	function parsePrimary():Expr {
+		var expr:Expr;
+
 		switch (currentToken()) {
 			case TLiteral(literal, _):
 				consume();
-
-				return {
-					expr: ELiteral(literal)
-				};
-
+				expr = {expr: ELiteral(literal)};
 			case TIdent(name, _):
 				consume();
-				return {
-					expr: EIdent(name)
-				};
-
+				expr = {expr: EIdent(name)};
 			case TSymbol(sym, _):
 				if (sym == LParen) {
 					consume();
-
-					final expr = parseExpr();
-
+					expr = parseExpr();
 					expectSymbol(RParen);
-
-					return expr;
+				} else {
+					throw new LiteException("Unexpected symbol in primary: " + Std.string(currentToken()));
 				}
-
-				throw new LiteException("Unexpected symbol in expression: " + Std.string(currentToken()));
 			case TEof:
 				return null;
-
 			default:
-				throw new LiteException("Unexpected token in expression: " + Std.string(currentToken()));
+				throw new LiteException("Unexpected token in primary: " + Std.string(currentToken()));
 		}
-		throw new LiteException("Unexpected error in primary parsing");
+
+		while (true) {
+			// call
+			if (matchSym(LParen)) {
+				consume();
+				var args:Array<Expr> = [];
+				while (!matchSym(RParen)) {
+					args.push(parseExpr());
+					if (matchSym(Comma))
+						consume();
+					else
+						break;
+				}
+				expectSymbol(RParen);
+				expr = {expr: ECall(expr, args)};
+			} else if (matchSym(Dot)) {
+				// field access
+				consume();
+				var fieldName = expectIdent().getParameters()[0];
+				expr = {expr: EField(expr, fieldName)};
+			} else {
+				break; // no more postfix
+			}
+		}
+
+		return expr;
 	}
 
 	// final de parsers de precendencia
+
+	function matchKw(matchingKw:Keyword) {
+		switch (currentToken()) {
+			case TKeyword(kw, _):
+				if (kw == matchingKw)
+					return true;
+			default:
+		}
+
+		return false;
+	}
 
 	function matchSym(matchingSym:Symbol) {
 		switch (currentToken()) {

@@ -16,14 +16,17 @@ class Printer {
 	public static function print(node:Expr, level:Int):String {
 		if (node == null)
 			return indentStr(level) + "null";
+
 		final pad = indentStr(level);
+		final end = "\n" + indentStr(level) + ")";
 
 		switch (node.expr) {
-			case EIfStat(cond, body):
-				return pad + "EIfStat(" + format(cond, level + 1) + ", " + print(body, level + 1) + ")";
+			case EIfStat(cond, thenBranch, fallback):
+				return pad + "EIfStat(" + format(cond, level + 1) + ",\n" + print(thenBranch, level + 1) + ",\n" + print(fallback, level + 1) + "\n" + pad
+					+ ")" + end;
 
 			case EWhile(condition, body):
-				return pad + "EWhile(" + format(condition, level + 1) + ", " + print(body, level + 1) + ")";
+				return pad + "EWhile(" + format(condition, level + 1) + ",\n" + print(body, level + 1) + "\n" + pad + ")" + end;
 
 			case EVarDecl(name, value):
 				return pad + "EVarDecl(" + name + ", " + format(value, level) + ")";
@@ -44,28 +47,39 @@ class Printer {
 				return pad + "EIdent(" + name + ")";
 
 			case EBlock(exprs):
+				if (exprs.length == 0)
+					return pad + "EBlock([])";
 				var inner = exprs.map(e -> print(e, level + 1)).join("\n");
-				return pad + "EBlock(\n" + inner + "\n" + pad + ")";
+				return pad + "EBlock(\n" + inner + "\n" + pad + ")" + end;
 
 			case EFuncDecl(name, params, body):
 				var ps = params.map(p -> p.name).join(", ");
-				return pad + "EFuncDecl(" + name + ", [" + ps + "], " + print(body, level + 1) + ")";
+				return pad + "EFuncDecl(" + name + ", [" + ps + "],\n" + print(body, level + 1) + "\n" + pad + ")" + end;
 
 			case EForCond(init, cond, incr, body):
-				return pad + "EForCond(" + format(init, level + 1) + ", " + format(cond, level + 1) + ", " + format(incr, level + 1) + ", "
-					+ print(body, level + 1) + ")";
+				return pad + "EForCond(" + format(init, level + 1) + ", " + format(cond, level + 1) + ", " + format(incr, level + 1) + ",\n"
+					+ print(body, level + 1) + "\n" + pad + ")" + end;
 
 			case EForIn(ident, iterable, body):
-				return pad + "EForIn(" + ident + ", " + format(iterable, level + 1) + ", " + print(body, level + 1) + ")";
+				return pad + "EForIn(" + ident + ", " + format(iterable, level + 1) + ",\n" + print(body, level + 1) + "\n" + pad + ")" + end;
 
 			case ERange(min, max):
-				return pad + "ERange(" + format(min, level + 1) + ", " + format(max, level + 1) + ")";
+				return pad + "ERange(" + format(min, level + 1) + ", " + format(max, level + 1) + ")" + end;
 
 			case EEof:
 				return pad + "EEof";
 
+			case EField(obj, field):
+				return pad + "EField(" + format(obj, level + 1) + ", " + field + ")" + end;
+
+			case ECall(func, args):
+				if (args.length == 0)
+					return pad + "ECall(" + format(func, level + 1) + ", [])";
+				var argsStr = args.map(a -> format(a, level + 1)).join(", ");
+				return pad + "ECall(" + format(func, level + 1) + ", [" + argsStr + "])" + end;
+
 			default:
-				return pad + "Unknown(" + Std.string(node) + ")";
+				return pad + "Unknown(" + Std.string(node) + ")" + end;
 		}
 	}
 

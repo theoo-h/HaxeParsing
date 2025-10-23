@@ -44,8 +44,9 @@ class Lexer {
 		while (position < content.length) {
 			final token:Token = resolveToken();
 
-			if (token != null)
+			if (token != null) {
 				tokens.push(token);
+			}
 		}
 
 		tokens.push(TEof);
@@ -96,6 +97,7 @@ class Lexer {
 
 			consume();
 		}
+		consume();
 
 		return TLiteral(STRING(buff.toString()), info);
 	}
@@ -105,6 +107,8 @@ class Lexer {
 		prepareInfo();
 
 		final sym:Null<Symbol> = switch (char) {
+			case ".".code:
+				Dot;
 			case ",".code:
 				Comma;
 			case ";".code:
@@ -128,7 +132,7 @@ class Lexer {
 		}
 		final op:Null<Operator> = switch (char) {
 			case ".".code:
-				if (peek() == ".".code && peek(1) == ".".code) {
+				if (peek(1) == ".".code && peek(2) == ".".code) {
 					consume();
 					consume();
 					RangeDot;
@@ -201,7 +205,6 @@ class Lexer {
 			default:
 				null;
 		}
-
 		if (sym != null) {
 			consume();
 			return TSymbol(sym, info);
@@ -210,7 +213,6 @@ class Lexer {
 			consume();
 			return TOperator(op, info);
 		}
-
 		return null;
 	}
 
@@ -233,14 +235,13 @@ class Lexer {
 			return TLiteral(INT(Std.parseInt(buff.toString())), info);
 		}
 
-		// float
 		while (isDigit(currentChar())) {
 			buff.addChar(currentChar());
 			consume();
 		}
 
 		// dec point
-		if (currentChar() == '.'.code) {
+		if (currentChar() == '.'.code && peek() != ".".code) {
 			isFloat = true;
 			buff.addChar(currentChar());
 			consume();
@@ -335,6 +336,8 @@ class Lexer {
 				FOR;
 			case "in":
 				IN;
+			case "type":
+				TYPE;
 			case _:
 				null;
 		}

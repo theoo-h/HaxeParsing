@@ -1,9 +1,10 @@
 pequeño proyecto para aprender el hacer tokenizacion, parseo y interprete de un mini lenguaje de scripting
 
 ## TODO
-- parsear stacks de elifs y else
-- parsear And y Or
-- parsear llamadas a funciones
+- [x] parsear stacks de elifs y else
+- [x] parsear And y Or
+- [x] parsear llamadas a funciones
+- parsear +=, *=, /=, -=
 - orientacion a objetos
 - añadir pos info a todo lo que se pueda en el parser
 
@@ -12,7 +13,7 @@ pequeño proyecto para aprender el hacer tokenizacion, parseo y interprete de un
 - Parser (in progress)
     - Precendencia (logica) (80%)
     - Statements (50%)
-        - Ifs (aun no hay elifs o else)
+        - Ifs
         - For (2 tipos, iterador (in) y condiciones (inicializacion/referencia; condicion; aumentar))
         - While
     - Expresiones (90%)
@@ -20,4 +21,3 @@ pequeño proyecto para aprender el hacer tokenizacion, parseo y interprete de un
         - fun decl
     - Bloques (100%)
 - Interprete (sin empezar)
-- Mas cosas q seguramente olvido pero ya es tarde tengo sueño y mañana hay laburo lol

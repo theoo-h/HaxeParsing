@@ -28,7 +28,11 @@ enum ExprType {
 	// while (Condition);
 	EWhile(condition:Expr, body:Expr);
 
-	EIfStat(cond:Expr, body:Expr);
+	EIfStat(cond:Expr, then:Expr, fallback:Expr);
+
+	ECall(left:Expr, args:Array<Expr>);
+
+	EField(object:Expr, field:String);
 
 	ERange(min:Expr, max:Expr);
 	EAssign(ident:VIdent, value:Expr);
