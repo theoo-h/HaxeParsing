@@ -6,10 +6,6 @@ import lite.core.PosException;
 import lite.core.PosInfo;
 import lite.util.Util;
 
-// broken somehow
-// (( )) <- this one doesnt get parsed, idk why
-// FIXME
-// rn i will just write tokens myself while making the ast
 class Lexer {
 	var content:String;
 
