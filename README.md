@@ -4,9 +4,9 @@ pequeño proyecto para aprender el hacer tokenizacion, parseo y interprete de un
 - [x] parsear stacks de elifs y else
 - [x] parsear And y Or
 - [x] parsear llamadas a funciones
-- parsear +=, *=, /=, -=
-- orientacion a objetos
-- añadir pos info a todo lo que se pueda en el parser
+- [] parsear +=, *=, /=, -=
+- [] orientacion a objetos
+- [] añadir pos info a todo lo que se pueda en el parser
 
 ## Hecho
 - Tokenizacion
