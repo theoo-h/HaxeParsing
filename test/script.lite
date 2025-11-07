@@ -1,0 +1,21 @@
+var value = 20;
+
+function a(num, num2)
+{
+    value = 12;
+    print(value);
+    var value = 16;
+    print(value);
+    print(self.value);
+    print(num * 5 + 2);
+}
+
+if (value == 10)
+{
+    print("True mf !!!");
+} else {
+    print("Not true mfs 🥀🥀");
+}
+
+a(1, 5);
+print(15 + value * (2 + 5 / 16 * (value)));

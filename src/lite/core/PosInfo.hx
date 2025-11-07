@@ -2,15 +2,19 @@ package lite.core;
 
 @:structInit
 class PosInfo {
-	public var minLine:UInt;
-	public var maxLine:UInt;
+	public var file:String;
 
-	public var minColumn:UInt;
-	public var maxColumn:UInt;
+	public var start:LitePosition;
+	public var end:LitePosition;
 
 	public function new() {}
 
-	public function toString():String {
-		return 'Position[minLine: $minLine, minColumn: $minColumn, maxLine: $maxLine, maxColumn: $maxColumn]';
+	public function toStrng():String {
+		return 'Position(start: $start, end: $start)';
 	}
+}
+
+private typedef LitePosition = {
+	line:UInt,
+	column:UInt
 }

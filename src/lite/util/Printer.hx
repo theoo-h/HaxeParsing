@@ -2,6 +2,7 @@ package lite.util;
 
 import lite.Expr;
 
+// esta clase es una mierda
 class Printer {
 	public static inline var spcPerIdn:Int = 4;
 

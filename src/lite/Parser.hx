@@ -5,6 +5,7 @@ import lite.Expr;
 import lite.Token;
 import lite.Token;
 import lite.core.LiteException;
+import lite.core.PosInfo;
 
 /**
  * STILL PRETTY PRETTY WIP
@@ -45,6 +46,18 @@ class Parser {
 		switch (curToken) {
 			case TKeyword(keyword, _):
 				switch (keyword) {
+					case RETURN:
+						return parseReturn();
+					case BREAK:
+						return {
+							expr: EEscape(Break),
+							pos: currentPos()
+						};
+					case CONTINUE:
+						return {
+							expr: EEscape(Break),
+							pos: currentPos()
+						};
 					case VAR:
 						return parseVarDecl();
 					case FUNCTION:
@@ -70,6 +83,18 @@ class Parser {
 		// throw new LiteException('Unexpected token: ${curToken}');
 	}
 
+	function parseReturn():Expr {
+		consume(); // ret
+
+		final expr = parseExpr();
+		expectSymbol(Semicolon);
+
+		return {
+			expr: EEscape(Return(expr)),
+			pos: currentPos()
+		};
+	}
+
 	// declarations
 	function parseTypeDecl():Expr {
 		expectKeyword(TYPE);
@@ -91,7 +116,8 @@ class Parser {
 		expectSymbol(Semicolon);
 
 		return {
-			expr: EVarDecl(name, expr)
+			expr: EVarDecl(name, expr),
+			pos: currentPos()
 		};
 	}
 
@@ -118,7 +144,8 @@ class Parser {
 		final block = parseBlock();
 
 		return {
-			expr: EFuncDecl(name, params, block)
+			expr: EFuncDecl(name, params, block),
+			pos: currentPos()
 		};
 	}
 
@@ -135,7 +162,8 @@ class Parser {
 		final body = parseBlock();
 
 		return {
-			expr: EWhile(cond, body)
+			expr: EWhile(cond, body),
+			pos: currentPos()
 		};
 	}
 
@@ -182,7 +210,8 @@ class Parser {
 		final body = parseBlock();
 
 		return {
-			expr: EForCond(decl, cond, incr, body)
+			expr: EForCond(decl, cond, incr, body),
+			pos: currentPos()
 		};
 	}
 
@@ -196,7 +225,8 @@ class Parser {
 		final body = parseBlock();
 
 		return {
-			expr: EForIn(ident, iterable, body)
+			expr: EForIn(ident, iterable, body),
+			pos: currentPos()
 		};
 	}
 
@@ -223,7 +253,8 @@ class Parser {
 		}
 
 		return {
-			expr: EIfStat(cond, body, fallback)
+			expr: EIfStat(cond, body, fallback),
+			pos: currentPos()
 		};
 	}
 
@@ -243,7 +274,8 @@ class Parser {
 		expectSymbol(RBrace);
 
 		return {
-			expr: EBlock(statements)
+			expr: EBlock(statements),
+			pos: currentPos()
 		};
 	}
 
@@ -263,7 +295,8 @@ class Parser {
 						consume();
 						final right = parseAnd();
 						left = {
-							expr: EBinOp(left, right, op)
+							expr: EBinOp(left, right, op),
+							pos: currentPos()
 						};
 					} else {
 						return left;
@@ -284,7 +317,8 @@ class Parser {
 						consume();
 						final right = parseRange();
 						left = {
-							expr: EBinOp(left, right, op)
+							expr: EBinOp(left, right, op),
+							pos: currentPos()
 						};
 					} else {
 						return left;
@@ -303,7 +337,8 @@ class Parser {
 			final right = parseAssignment();
 
 			return {
-				expr: ERange(left, right)
+				expr: ERange(left, right),
+				pos: currentPos()
 			};
 		}
 		return left;
@@ -323,7 +358,8 @@ class Parser {
 					switch (left.expr) {
 						case EIdent(name):
 							return {
-								expr: EAssign(name, value)
+								expr: EAssign(name, value),
+								pos: currentPos()
 							};
 						default:
 							throw new LiteException("Invalid left-hand side in assignment: " + Std.string(left));
@@ -349,7 +385,8 @@ class Parser {
 
 							final right = parseComparison();
 							left = {
-								expr: EBinOp(left, right, op)
+								expr: EBinOp(left, right, op),
+								pos: currentPos()
 							};
 						default:
 							return left;
@@ -373,7 +410,8 @@ class Parser {
 							consume();
 							final right = parseTerm();
 							left = {
-								expr: EBinOp(left, right, op)
+								expr: EBinOp(left, right, op),
+								pos: currentPos()
 							};
 						default:
 							return left;
@@ -396,7 +434,8 @@ class Parser {
 							consume();
 							final right = parseFactor();
 							left = {
-								expr: EBinOp(left, right, op)
+								expr: EBinOp(left, right, op),
+								pos: currentPos()
 							}
 						default:
 							return left;
@@ -420,7 +459,8 @@ class Parser {
 							final right = parseUnary();
 
 							left = {
-								expr: EBinOp(left, right, op)
+								expr: EBinOp(left, right, op),
+								pos: currentPos()
 							};
 						default:
 							return left;
@@ -443,7 +483,8 @@ class Parser {
 						final left = parseUnary();
 
 						return {
-							expr: EUnaryOp(left, op)
+							expr: EUnaryOp(left, op),
+							pos: currentPos()
 						};
 					default:
 				}
@@ -460,10 +501,16 @@ class Parser {
 		switch (currentToken()) {
 			case TLiteral(literal, _):
 				consume();
-				expr = {expr: ELiteral(literal)};
+				expr = {
+					expr: ELiteral(literal),
+					pos: currentPos()
+				};
 			case TIdent(name, _):
 				consume();
-				expr = {expr: EIdent(name)};
+				expr = {
+					expr: EIdent(name),
+					pos: currentPos()
+				};
 			case TSymbol(sym, _):
 				if (sym == LParen) {
 					consume();
@@ -491,12 +538,18 @@ class Parser {
 						break;
 				}
 				expectSymbol(RParen);
-				expr = {expr: ECall(expr, args)};
+				expr = {
+					expr: ECall(expr, args),
+					pos: currentPos()
+				};
 			} else if (matchSym(Dot)) {
 				// field access
 				consume();
 				var fieldName = expectIdent().getParameters()[0];
-				expr = {expr: EField(expr, fieldName)};
+				expr = {
+					expr: EField(expr, fieldName),
+					pos: currentPos()
+				};
 			} else {
 				break; // no more postfix
 			}
@@ -601,6 +654,15 @@ class Parser {
 
 	function peek(offset:Int = 1) {
 		return tokens[position + offset];
+	}
+
+	function currentPos():PosInfo {
+		switch (currentToken()) {
+			case TKeyword(_, pos), TIdent(_, pos), TLiteral(_, pos), TOperator(_, pos), TSymbol(_, pos):
+				return pos;
+			case _:
+				return null;
+		}
 	}
 
 	// bottom utils

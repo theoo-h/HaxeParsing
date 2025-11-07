@@ -1,10 +1,12 @@
 package lite;
 
 import lite.Token;
+import lite.core.PosInfo;
 
 @:structInit
 class Expr {
 	public var expr:ExprType;
+	public var pos:PosInfo;
 
 	public function toString() {
 		return {
@@ -34,6 +36,8 @@ enum ExprType {
 
 	EField(object:Expr, field:String);
 
+	EEscape(kind:EscapeType);
+
 	ERange(min:Expr, max:Expr);
 	EAssign(ident:VIdent, value:Expr);
 	EBinOp(left:Expr, right:Expr, op:Operator);
@@ -41,6 +45,12 @@ enum ExprType {
 	ELiteral(literal:Literal);
 	EIdent(ident:VIdent);
 	EEof;
+}
+
+enum EscapeType {
+	Break;
+	Continue;
+	Return(expr:Expr);
 }
 
 typedef FArgument = {

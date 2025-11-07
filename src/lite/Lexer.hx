@@ -22,9 +22,12 @@ class Lexer {
 
 	function prepareInfo() {
 		info = {};
+		info.file = "script";
 
-		info.minLine = line;
-		info.minColumn = column;
+		info.start = {
+			line: line,
+			column: column
+		};
 	}
 
 	public function run():Array<Token> {
@@ -334,6 +337,12 @@ class Lexer {
 				IN;
 			case "type":
 				TYPE;
+			case "return":
+				RETURN;
+			case "break":
+				BREAK;
+			case "continue":
+				CONTINUE;
 			case _:
 				null;
 		}
@@ -353,8 +362,10 @@ class Lexer {
 			column++;
 		position++;
 
-		info.maxLine = line;
-		info.maxColumn = column;
+		info.end = {
+			line: line,
+			column: column
+		};
 	}
 
 	function peek(offset:Int = 1) {

@@ -1,23 +1,40 @@
-pequeño proyecto para aprender el hacer tokenizacion, parseo y interprete de un mini lenguaje de scripting
+pequeño proyecto donde intento aprender como funcionan los lenguajes por dentro, haciendo uno
 
-## TODO
-- [x] parsear stacks de elifs y else
-- [x] parsear And y Or
-- [x] parsear llamadas a funciones
-- parsear +=, *=, /=, -=
-- orientacion a objetos
-- añadir pos info a todo lo que se pueda en el parser
 
-## Hecho
-- Tokenizacion
-- Parser (in progress)
-    - Precendencia (logica) (80%)
-    - Statements (50%)
-        - Ifs
-        - For (2 tipos, iterador (in) y condiciones (inicializacion/referencia; condicion; aumentar))
-        - While
-    - Expresiones (90%)
-        - var decl
-        - fun decl
-    - Bloques (100%)
-- Interprete (sin empezar)
+talvez se me olvidan listar algunas cosas, luego lo ire haciendo
+
+## Todo
+- [x] Tokenizacion (practicamente terminado, talvez poco a poco se ira extendiendo conforme agrego cosas)
+
+- [ ] Parser (in progress)
+    - [x] Precendencia (binary, unary, primary) (parcialmente)
+    - [x] Statements 
+        - [x] Ifs (elif, else)
+        - [x] For (iterador y decl ; cond ; aum)
+        - [x] While
+    - [x] Expresiones
+        - [x] var decl
+        - [x] fun decl
+        - [ ] class decl
+    - [x] Bloques
+    - [ ] Clases y tipos
+    - [ ] Diccionarios
+    - [ ] Arrays
+
+- [ ] Interprete (in progress)
+    - [x] Ifs (elif, else)
+    - [x] Delcaracion de funciones (runtime y nativas)
+    - [x] Declaracion de variables
+    - [x] Asignacion de variables
+    - [x] Nested scopes
+    - [x] Matematica (precedencia) y comparaciones
+    - [ ] Api nativa
+    - [ ] For loops (por iterador y decl ; cond ; aum)
+    - [ ] Secuencias de escape (break, continue, return)
+    - [ ] While loops
+    - [ ] Clases y tipos
+    - [x] Llamado a metodos
+    - [x] Acceso a fields
+    - [x] Deteccion de errores
+    - [ ] Typer
+    - [ ] Orientacion a Objetos

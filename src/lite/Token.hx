@@ -112,6 +112,10 @@ enum Keyword {
 	ELIF;
 	ELSE;
 
+	CONTINUE;
+	BREAK;
+	RETURN;
+
 	WHILE;
 	FOR;
 
