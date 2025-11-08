@@ -1,0 +1,30 @@
+name: Build Haxe to Python
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: latest
+
+      - name: Compile Haxe to Python
+        run: |
+          mkdir -p out
+          haxe -python out/main.py -main Main -cp src
+      - name: Upload compiled Python file
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-python
+          path: out/main.py
