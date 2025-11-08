@@ -56,6 +56,8 @@ class Lexer {
 		final char = currentChar();
 
 		switch (char) {
+			case isComment(char) => true:
+				return parseComment();
 			case isWhitespace(char) => true:
 				consume();
 				return null;
@@ -71,6 +73,29 @@ class Lexer {
 				return parseIdent();
 		}
 
+		return null;
+	}
+
+	function parseComment():Token {
+		var buff:StringBuf = new StringBuf();
+
+		prepareInfo();
+
+		consume(); // #
+
+		while (true) {
+			final char = currentChar();
+
+			if (char == "\n".code || StringTools.isEof(char))
+				break;
+
+			buff.addChar(char);
+
+			consume();
+		}
+		consume();
+
+		// ignore them
 		return null;
 	}
 
@@ -335,8 +360,8 @@ class Lexer {
 				FOR;
 			case "in":
 				IN;
-			case "type":
-				TYPE;
+			case "struct":
+				STRUCT;
 			case "return":
 				RETURN;
 			case "break":
@@ -373,6 +398,10 @@ class Lexer {
 	}
 
 	// helpers
+	function isComment(char:Int) {
+		return char == '#'.code;
+	}
+
 	function isWhitespace(char:Int):Bool {
 		return char == ' '.code || char == '\t'.code || char == '\n'.code || char == '\r'.code;
 	}

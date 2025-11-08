@@ -14,8 +14,11 @@ import lite.util.Util;
 
 using lite.util.RuntimeUtil;
 
+// https://haxe.org/manual/lf-pattern-matching-tuples.html
+// HAXE HAD TUPLES ALL THIS TIME???
 class Interp {
 	// variable/function storage
+	var scopePool:Vector<Null<Scope>>;
 	var global:Scope;
 	var env:Scope;
 
@@ -42,6 +45,8 @@ class Interp {
 		}));
 
 		global.set("self", VScope(global));
+
+		scopePool = new Vector<Null<Scope>>(Std.int(Math.pow(2, 12)), null);
 	}
 
 	var ptr = 0;
@@ -101,6 +106,24 @@ class Interp {
 
 					case Continue:
 						throw new Escape(_EscapeType.Continue);
+				}
+
+			case EWhile(condition, body):
+				while (true) {
+					try {
+						var condRes = evalCond(condition, body);
+						if (condRes == VNull)
+							break; // loop naturally ended
+					} catch (e:Escape) {
+						switch (e.e) {
+							case Break:
+								break; // exit this while
+							case Continue:
+								continue; // go to next iteration
+							case Return(_):
+								throw e; // propagate return
+						}
+					}
 				}
 
 			case EIfStat(cond, then, fallback):
@@ -175,7 +198,6 @@ class Interp {
 		final l = eval(left);
 		final r = eval(right);
 
-		// TODO: añadir las ops que quedan
 		return switch (op) {
 			case Add:
 				computeMath(l, r, (a, b) -> a + b, (a, b) -> a + b, (a, b) -> a + b);
@@ -185,31 +207,73 @@ class Interp {
 				computeMath(l, r, (a, b) -> a * b, (a, b) -> a * b, null);
 			case Div:
 				computeMath(l, r, null, (a, b) -> a / b, null);
+			case Mod:
+				computeMath(l, r, (a, b) -> a % b, (a, b) -> a % b, null);
 
-			case Equal:
-				compare(l, r);
+			case Equal, LessThan, LessEqualThan, GreaterThan, GreaterEqualThan:
+				compare(l, r, op);
 
 			case _:
 				throw 'Unsupported binary op: $op';
 		}
 	}
 
-	function compare(left:LiteValue, right:LiteValue):LiteValue {
+	function compare(left:LiteValue, right:LiteValue, ?op:Operator):LiteValue {
 		return switch [left, right] {
-			case [VInt(a), VInt(b)]: VBool(a == b);
-			case [VFloat(a), VFloat(b)]: VBool(a == b);
-			case [VBool(a), VBool(b)]: VBool(a == b);
-			case [VString(a), VString(b)]: VBool(a == b);
+			// numeric comparisons
+			case [VInt(a), VInt(b)]:
+				switch op {
+					case Equal: VBool(a == b);
+					case LessThan: VBool(a < b);
+					case LessEqualThan: VBool(a <= b);
+					case GreaterThan: VBool(a > b);
+					case GreaterEqualThan: VBool(a >= b);
+					case _: VBool(false);
+				}
 
-			case [VInt(a), VFloat(b)]: VBool(a == b);
-			case [VFloat(a), VInt(b)]: VBool(a == b);
+			case [VFloat(a), VFloat(b)]:
+				switch op {
+					case Equal: VBool(a == b);
+					case LessThan: VBool(a < b);
+					case LessEqualThan: VBool(a <= b);
+					case GreaterThan: VBool(a > b);
+					case GreaterEqualThan: VBool(a >= b);
+					case _: VBool(false);
+				}
 
-			case [VNull, VNull]: VBool(true);
-			case [VNull, _] | [_, VNull]: VBool(false);
+			case [VInt(a), VFloat(b)]:
+				switch op {
+					case Equal: VBool(a == b);
+					case LessThan: VBool(a < b);
+					case LessEqualThan: VBool(a <= b);
+					case GreaterThan: VBool(a > b);
+					case GreaterEqualThan: VBool(a >= b);
+					case _: VBool(false);
+				}
 
-			// TODO: comparacion de memoria
+			case [VFloat(a), VInt(b)]:
+				switch op {
+					case Equal: VBool(a == b);
+					case LessThan: VBool(a < b);
+					case LessEqualThan: VBool(a <= b);
+					case GreaterThan: VBool(a > b);
+					case GreaterEqualThan: VBool(a >= b);
+					case _: VBool(false);
+				}
 
-			case _: VBool(false);
+			// other types
+			case [VBool(a), VBool(b)]:
+				VBool(op == Equal && a == b);
+			case [VString(a), VString(b)]:
+				VBool(op == Equal && a == b);
+
+			case [VNull, VNull]:
+				VBool(op == Equal);
+			case [VNull, _] | [_, VNull]:
+				VBool(false);
+
+			case _:
+				VBool(false);
 		}
 	}
 
@@ -247,7 +311,7 @@ class Interp {
 
 				if (f.args.length != args.length)
 					throw new LiteException('Expected ${f.args.length} but got ${args.length} arguments');
-				// link params (is this how it works?? lol)
+
 				for (i in 0...f.args.length) {
 					var argName = switch (f.args[i]) {
 						case VString(s): s;
@@ -256,12 +320,22 @@ class Interp {
 					localScope.set(argName, args[i]);
 				}
 
-				// again lololololo
 				var prev = env;
 				env = localScope;
-				var result = eval(f.body);
-				env = prev;
 
+				var result:LiteValue;
+				try {
+					result = eval(f.body);
+				} catch (e:Escape) {
+					switch (e.e) {
+						case Return(v):
+							result = v;
+						case Break, Continue:
+							throw new LiteException("Break/Continue outside loop");
+					}
+				}
+
+				env = prev;
 				return result;
 
 			case _:
@@ -276,9 +350,14 @@ class Interp {
 
 		var last:LiteValue = VNull;
 
-		// fuck fuck fuck fcuk
-		for (expr in exprs)
-			last = eval(expr);
+		try {
+			for (expr in exprs) {
+				last = eval(expr);
+			}
+		} catch (e:Escape) {
+			env = prev;
+			throw e; // propagate
+		}
 
 		env = prev;
 		return last;

@@ -3,6 +3,7 @@ package lite;
 import lite.core.PosInfo;
 
 enum Token {
+	TComment(content:String, pos:PosInfo);
 	TKeyword(t:Keyword, pos:PosInfo);
 	TIdent(name:String, pos:PosInfo);
 
@@ -103,7 +104,7 @@ enum Operator {
 }
 
 enum Keyword {
-	TYPE;
+	STRUCT;
 
 	VAR;
 	FUNCTION;

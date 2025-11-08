@@ -5,12 +5,18 @@ import lite.Expr;
 import lite.Token;
 import lite.Token;
 import lite.core.LiteException;
+import lite.core.PosException;
 import lite.core.PosInfo;
 
-/**
- * STILL PRETTY PRETTY WIP
- * ITS MY FIRST TIME MAKING AN ACTUAL AST SO IT MAY CRASH RANDOMLY
- */
+using lite.util.Printer;
+
+private enum ContextType {
+	Global;
+	Struct;
+	Function;
+	Block;
+}
+
 class Parser {
 	var tokens:Array<Token> = [];
 
@@ -68,6 +74,8 @@ class Parser {
 						return parseWhileStat();
 					case IF:
 						return parseIfStat();
+					case STRUCT:
+						return parseStruct();
 					default:
 				}
 			default:
@@ -78,9 +86,27 @@ class Parser {
 		if (matchSym(Semicolon))
 			consume();
 
+		if (expr != null && !allowInContext(expr)) {
+			throw new PosException('Invalid statement in struct body: `${expr.print()}` ', currentPos());
+		}
+
 		return expr;
 
 		// throw new LiteException('Unexpected token: ${curToken}');
+	}
+
+	function parseStruct():Expr {
+		consume();
+		final name = expectIdent().getParameters()[0];
+
+		pushCtx(Struct);
+		final body = parseBlock();
+		popCtx(Struct);
+
+		return {
+			expr: EStructDecl(name, body),
+			pos: currentPos()
+		};
 	}
 
 	function parseReturn():Expr {
@@ -93,15 +119,6 @@ class Parser {
 			expr: EEscape(Return(expr)),
 			pos: currentPos()
 		};
-	}
-
-	// declarations
-	function parseTypeDecl():Expr {
-		expectKeyword(TYPE);
-
-		final name = expectIdent().getParameters()[0];
-
-		return null;
 	}
 
 	function parseVarDecl():Expr {
@@ -141,7 +158,9 @@ class Parser {
 
 		expectSymbol(RParen);
 
+		pushCtx(Function);
 		final block = parseBlock();
+		popCtx(Function);
 
 		return {
 			expr: EFuncDecl(name, params, block),
@@ -260,6 +279,7 @@ class Parser {
 
 	function parseBlock():Expr {
 		expectSymbol(LBrace);
+		pushCtx(Block);
 
 		var statements = [];
 		while (currentToken() != TEof && !matchSym(RBrace)) {
@@ -272,6 +292,8 @@ class Parser {
 		}
 
 		expectSymbol(RBrace);
+
+		popCtx(Block);
 
 		return {
 			expr: EBlock(statements),
@@ -361,6 +383,12 @@ class Parser {
 								expr: EAssign(name, value),
 								pos: currentPos()
 							};
+						case EField(base, field):
+							return {
+								expr: EFieldAssign(base, field, value),
+								pos: currentPos()
+							};
+
 						default:
 							throw new LiteException("Invalid left-hand side in assignment: " + Std.string(left));
 					}
@@ -665,20 +693,38 @@ class Parser {
 		}
 	}
 
-	// bottom utils
-	function getPrecedence(tok:Token):Int {
-		return switch (tok) {
-			case TOperator(op, _):
-				return switch (op) {
-					case Mult, Div, Mod: 3;
-					case Add, Sub: 2;
-					case Equal, NotEqual: 1;
-					case And: 0;
-					case Or: -1;
-					default: -2;
-				}
-			default:
-				-2;
+	var ctxStack:Array<ContextType> = [Global];
+
+	private var ctx(get, never):ContextType;
+
+	private function get_ctx():ContextType
+		return ctxStack[ctxStack.length - 1];
+
+	private function pushCtx(_:ContextType) {
+		ctxStack.push(_);
+	}
+
+	private function popCtx(_:ContextType) {
+		if (ctxStack.length > 1) // never pop the initial Global
+			ctxStack.pop();
+		else
+			throw new PosException("Parser internal error: popCtx underflow", currentPos());
+	}
+
+	private function allowInContext(expr:Expr):Bool {
+		// Check if we're inside a function → allow everything
+		if (ctxStack.indexOf(ContextType.Function) != -1)
+			return true;
+
+		// Otherwise, if we're inside a struct (and NOT inside a function)
+		if (ctxStack.indexOf(ContextType.Struct) != -1) {
+			return switch (expr.expr) {
+				case EVarDecl(_) | EFuncDecl(_) | EStructDecl(_): true;
+				default: false;
+			}
 		}
+
+		// Global / block level → allow everything
+		return true;
 	}
 }

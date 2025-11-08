@@ -9,15 +9,14 @@ class Expr {
 	public var pos:PosInfo;
 
 	public function toString() {
-		return {
-			expr: expr
-		};
+		return '{ expr: $expr, pos: $pos }';
 	}
 }
 
 enum ExprType {
 	EBlock(exprs:Array<Expr>);
 
+	EStructDecl(name:String, body:Expr);
 	EVarDecl(ident:VIdent, expr:Expr);
 	EFuncDecl(name:String, params:Array<FArgument>, body:Expr);
 
@@ -39,7 +38,10 @@ enum ExprType {
 	EEscape(kind:EscapeType);
 
 	ERange(min:Expr, max:Expr);
+
 	EAssign(ident:VIdent, value:Expr);
+	EFieldAssign(parent:Expr, ident:String, value:Expr);
+
 	EBinOp(left:Expr, right:Expr, op:Operator);
 	EUnaryOp(left:Expr, op:Operator);
 	ELiteral(literal:Literal);
