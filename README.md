@@ -30,7 +30,7 @@ talvez se me olvidan listar algunas cosas, luego lo ire haciendo
     - [x] Matematica (precedencia) y comparaciones
     - [ ] Api nativa
     - [ ] For loops (por iterador y decl ; cond ; aum)
-    - [ ] Secuencias de escape (break, continue, return)
+    - [x] Secuencias de escape (break, continue, return)
     - [ ] While loops
     - [ ] Clases y tipos
     - [x] Llamado a metodos

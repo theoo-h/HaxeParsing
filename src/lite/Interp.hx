@@ -94,7 +94,6 @@ class Interp {
 		curPosition = expr.pos;
 
 		switch (expr.expr) {
-			// TODO: escapes, tengo una vaga idea en mi cabeza de como, queee es usando excepciones
 			case EEscape(kind):
 				switch (kind) {
 					case Return(expr):
@@ -113,15 +112,15 @@ class Interp {
 					try {
 						var condRes = evalCond(condition, body);
 						if (condRes == VNull)
-							break; // loop naturally ended
+							break;
 					} catch (e:Escape) {
 						switch (e.e) {
 							case Break:
-								break; // exit this while
+								break;
 							case Continue:
-								continue; // go to next iteration
+								continue;
 							case Return(_):
-								throw e; // propagate return
+								throw e;
 						}
 					}
 				}
@@ -356,7 +355,9 @@ class Interp {
 			}
 		} catch (e:Escape) {
 			env = prev;
-			throw e; // propagate
+
+			// recursivigod
+			throw e;
 		}
 
 		env = prev;
