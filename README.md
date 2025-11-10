@@ -15,11 +15,11 @@ talvez se me olvidan listar algunas cosas, luego lo ire haciendo
     - [x] Expresiones
         - [x] var decl
         - [x] fun decl
-        - [ ] class decl
+        - [x] struct decl
     - [x] Bloques
     - [ ] Clases y tipos
     - [ ] Diccionarios
-    - [ ] Arrays
+    - [x] Arrays (access, initialization)
 
 - [ ] Interprete (in progress)
     - [x] Ifs (elif, else)
@@ -28,7 +28,7 @@ talvez se me olvidan listar algunas cosas, luego lo ire haciendo
     - [x] Asignacion de variables
     - [x] Nested scopes
     - [x] Matematica (precedencia) y comparaciones
-    - [ ] Api nativa
+    - [ ] Api nativa (ej Array, Int, Float)
     - [ ] For loops (por iterador y decl ; cond ; aum)
     - [x] Secuencias de escape (break, continue, return)
     - [ ] While loops

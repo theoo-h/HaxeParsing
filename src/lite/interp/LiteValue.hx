@@ -1,5 +1,6 @@
 package lite.interp;
 
+import haxe.ds.StringMap;
 import lite.Expr;
 import lite.interp.Scope;
 
@@ -15,6 +16,13 @@ enum LiteValue {
 	VNativeFun(f:(Array<LiteValue>) -> LiteValue);
 	VFun(f:RuntimeFun);
 	VScope(s:Scope);
+}
+
+@:structInit
+@:publicFields
+class NativeFun {
+	var name:String;
+	var c:(Array<LiteValue>) -> LiteValue;
 }
 
 @:structInit

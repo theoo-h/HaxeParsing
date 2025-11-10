@@ -96,16 +96,54 @@ class Parser {
 	}
 
 	function parseStruct():Expr {
-		consume();
+		var pos:PosInfo = expectKeyword(STRUCT).getParameters()[1];
 		final name = expectIdent().getParameters()[0];
 
+		expectSymbol(LBrace);
+
 		pushCtx(Struct);
-		final body = parseBlock();
+
+		var fields:Array<StructField> = [];
+		var constructor:Null<StructField> = null;
+
+		while (currentToken() != TEof && !matchSym(RBrace)) {
+			final exprField = resolveNode();
+			if (exprField != null) {
+				switch (exprField.expr) {
+					case EFuncDecl(name, _, __):
+						// is it the constructor?
+						if (name == "constructor") {
+							constructor = {
+								expr: exprField,
+								pos: currentPos()
+							};
+							continue;
+						}
+					case _: // skip
+				}
+				var newField:StructField = {
+					expr: exprField,
+					pos: currentPos()
+				};
+
+				fields.push(newField);
+			} else {
+				throw new PosException('Error while parsing statements in struct: ${currentToken()}', currentPos());
+			}
+		}
+
+		expectSymbol(RBrace);
+
 		popCtx(Struct);
 
+		final structDef:StructDef = {
+			name: name,
+			fields: fields,
+			constructor: constructor
+		};
 		return {
-			expr: EStructDecl(name, body),
-			pos: currentPos()
+			expr: EStructDecl(structDef),
+			pos: pos
 		};
 	}
 
@@ -544,6 +582,26 @@ class Parser {
 					consume();
 					expr = parseExpr();
 					expectSymbol(RParen);
+				} else if (sym == LBracket) {
+					// array initialization
+					var pos = expectSymbol(LBracket).getParameters()[1];
+
+					var mem = [];
+
+					while (!matchSym(RBracket)) {
+						mem.push(parseExpr());
+						if (matchSym(Comma))
+							consume();
+						else
+							break;
+					}
+
+					expectSymbol(RBracket);
+
+					expr = {
+						expr: EArray(mem),
+						pos: pos
+					};
 				} else {
 					throw new LiteException("Unexpected symbol in primary: " + Std.string(currentToken()));
 				}
@@ -554,6 +612,19 @@ class Parser {
 		}
 
 		while (true) {
+			// array access
+			if (matchSym(LBracket)) {
+				var pos = expectSymbol(LBracket).getParameters()[1];
+
+				var index = parseExpr();
+
+				expectSymbol(RBracket);
+
+				return {
+					expr: EArrayAccess(expr, index),
+					pos: pos
+				};
+			}
 			// call
 			if (matchSym(LParen)) {
 				consume();
@@ -705,18 +776,17 @@ class Parser {
 	}
 
 	private function popCtx(_:ContextType) {
-		if (ctxStack.length > 1) // never pop the initial Global
+		// global one still
+		if (ctxStack.length > 1)
 			ctxStack.pop();
 		else
 			throw new PosException("Parser internal error: popCtx underflow", currentPos());
 	}
 
 	private function allowInContext(expr:Expr):Bool {
-		// Check if we're inside a function → allow everything
 		if (ctxStack.indexOf(ContextType.Function) != -1)
 			return true;
 
-		// Otherwise, if we're inside a struct (and NOT inside a function)
 		if (ctxStack.indexOf(ContextType.Struct) != -1) {
 			return switch (expr.expr) {
 				case EVarDecl(_) | EFuncDecl(_) | EStructDecl(_): true;
@@ -724,7 +794,6 @@ class Parser {
 			}
 		}
 
-		// Global / block level → allow everything
 		return true;
 	}
 }

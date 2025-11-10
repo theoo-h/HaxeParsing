@@ -4,12 +4,14 @@ import haxe.ds.StringMap;
 import haxe.ds.Vector;
 import lite.Expr.EscapeType;
 import lite.Expr.ExprType;
+import lite.Expr.StructDef;
 import lite.Token.Operator;
 import lite.core.LiteException;
 import lite.core.PosException;
 import lite.core.PosInfo;
 import lite.interp.LiteValue;
 import lite.interp.Scope;
+import lite.util.Printer;
 import lite.util.Util;
 
 using lite.util.RuntimeUtil;
@@ -17,8 +19,6 @@ using lite.util.RuntimeUtil;
 // https://haxe.org/manual/lf-pattern-matching-tuples.html
 // HAXE HAD TUPLES ALL THIS TIME???
 class Interp {
-	// variable/function storage
-	var scopePool:Vector<Null<Scope>>;
 	var global:Scope;
 	var env:Scope;
 
@@ -71,6 +71,13 @@ class Interp {
 		switch (object) {
 			case VScope(s):
 				return s.get(field);
+			// case VInst(ref):
+			// 	final field = ref.fields.get(field);
+
+			// 	if (field == null) {
+			// 		throw new PosException('Unknown identifier "$field "in object "$object"', curPosition);
+			// 	}
+			// 	return field;
 			case _:
 				return VNull;
 		}
@@ -90,10 +97,37 @@ class Interp {
 		}
 	}
 
+	function createStruct(def) {
+		return null;
+	}
+
 	function eval(expr:Expr):LiteValue {
 		curPosition = expr.pos;
 
 		switch (expr.expr) {
+			case EArrayAccess(object, index):
+				final vobj = eval(object);
+				final vindex = eval(index);
+
+				var idxn = -1;
+
+				switch (vindex) {
+					case VInt(v):
+						idxn = v;
+					case _:
+						throw new PosException('Invalid index ${Printer.print(index)} for array access', curPosition);
+				}
+				switch (vobj) {
+					case VArray(v):
+						return v[idxn];
+					case _:
+						throw new PosException('Object ${Printer.print(object)} has not array access.', curPosition);
+				}
+			case EArray(mem):
+				return VArray([for (m in mem) eval(m)]);
+			case EStructDecl(def):
+				return createStruct(def);
+
 			case EEscape(kind):
 				switch (kind) {
 					case Return(expr):
@@ -143,7 +177,7 @@ class Interp {
 				final res = env.assign(ident, val);
 
 				if (res == null)
-					throw new PosException('Unknown identifier \"$ident\"', curPosition);
+					throw new PosException('Unknown identifier \"$ident\" for assign', curPosition);
 
 				return val;
 			case EBlock(exprs):
@@ -171,7 +205,14 @@ class Interp {
 			case ECall(fun, args):
 				var func = eval(fun);
 				var argValues = [for (a in args) eval(a)];
-				return callFunction(func, argValues);
+
+				switch (func) {
+					// case VStruct(f):
+					// 	return createInstance(f, argValues);
+					case _:
+						return callFunction(func, argValues);
+				}
+
 			case EIdent(ident):
 				final n = env.get(ident);
 
@@ -338,7 +379,7 @@ class Interp {
 				return result;
 
 			case _:
-				throw "Trying to call non-function value";
+				throw "Trying to call non-function value " + func;
 		}
 	}
 
@@ -366,6 +407,29 @@ class Interp {
 
 	function consume() {
 		ptr++;
+	}
+
+	// internal stuff
+	// variable/function storage
+	var scopePool:Vector<Null<Scope>>;
+
+	inline function allocScope(parent:Scope):Scope {
+		for (i in 0...scopePool.length) {
+			var s = scopePool[i];
+			if (s != null && !s.inUse) {
+				s.reset(parent);
+				s.inUse = true;
+				return s;
+			}
+		}
+		var s = new Scope(parent);
+		s.inUse = true;
+		return s;
+	}
+
+	inline function freeScope(s:Scope) {
+		s.clear();
+		s.inUse = false;
 	}
 }
 

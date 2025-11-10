@@ -1,5 +1,6 @@
 -cp src
 --main Main
 
---cpp bin/cpp
-# --interp
+# --cpp bin/cpp
+--interp
+# --python bin/main.py

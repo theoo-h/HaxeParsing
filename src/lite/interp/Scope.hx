@@ -7,6 +7,9 @@ class Scope {
 	private var _:StringMap<Null<LiteValue>>;
 	private var parent:Null<Scope>;
 
+	@:allow(lite.Interp)
+	private var inUse:Bool = false;
+
 	public function new(parent:Null<Scope> = null) {
 		this.parent = parent;
 
@@ -24,6 +27,14 @@ class Scope {
 			return val;
 		}
 		return parent != null ? parent.assign(ident, val) : VNull;
+	}
+
+	public function clear() {
+		_.clear();
+	}
+
+	public function reset(parent:Scope) {
+		this.parent = parent;
 	}
 
 	public function get(id:String):Null<LiteValue> {

@@ -10,13 +10,15 @@ class Main {
 	static function main() {
 		final c = File.getContent(Sys.getCwd() + 'test/script.lite');
 		var time = Timer.stamp();
+		trace('Tokenizing...');
 		var tokens = new Lexer(c).run();
+
+		trace('Parsing...');
 		var parser = new Parser(tokens);
 		var ast = parser.run();
-		trace(ast);
+		trace('Evaluating...');
 		var output = new Interp(ast);
 		output.run();
-
-		trace(Timer.stamp() - time);
+		trace('Time taken (tokenize, parsing and interping): ${Timer.stamp() - time}');
 	}
 }

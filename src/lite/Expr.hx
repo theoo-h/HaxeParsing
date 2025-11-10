@@ -14,9 +14,13 @@ class Expr {
 }
 
 enum ExprType {
+	// TODO: move this to literals (make custom literal enum for exprs)
+	EArray(mem:Array<Expr>);
+
+	EArrayAccess(object:Expr, index:Expr);
 	EBlock(exprs:Array<Expr>);
 
-	EStructDecl(name:String, body:Expr);
+	EStructDecl(struct:StructDef);
 	EVarDecl(ident:VIdent, expr:Expr);
 	EFuncDecl(name:String, params:Array<FArgument>, body:Expr);
 
@@ -47,6 +51,32 @@ enum ExprType {
 	ELiteral(literal:Literal);
 	EIdent(ident:VIdent);
 	EEof;
+}
+
+@:structInit
+@:publicFields
+class StructDef {
+	// the name of the struct
+	var name:String;
+
+	// fields of the struct
+	var fields:Array<StructField>;
+
+	// the constructor function (can be null)
+	var constructor:Null<StructField>;
+	// parent (only if the struct is extending from other struct)
+	// var parent:Null<StructDef>:
+}
+
+@:structInit
+@:publicFields
+class StructField {
+	var expr:Expr;
+	var pos:PosInfo;
+
+	public function toString() {
+		return '{expr: $expr, pos: $pos }';
+	}
 }
 
 enum EscapeType {

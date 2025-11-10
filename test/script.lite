@@ -1,22 +1,4 @@
-# actualmente solo se parsean, aun no funcionan (y si, tambien agrege comentarios xdd)
+# tira otra cosaaa
+var miArray = [1, 2, "Hola", 4, 1.412121, 1 * 5 + 7 / 2 * (2 / 5 / 6 * 8)];
 
-struct MyObject
-{
-    var myField = "Hello";
-
-    function constructor()
-    {
-       self.myField = "Good Bye";
-    }
-
-    function work()
-    {
-        print(myField + ",  world! ");
-    }
-
-    # myField = "Fuck"; # Invalid statement in struct body: `myField = "Fuck"` (at line 18, column 1-2)
-
-    # `unknown`  PORQUE NO HE AÑADIDO IFS A EL PRINTER LOLOLOLO
-    
-    # if (myField == "Hello") { print("Is saluting !"); } # Invalid statement in struct body: `unknown` (at line 18-19, column 55-1)
-}
+print(miArray);
